@@ -19,6 +19,8 @@ tags_dict = {row["user_id"]: row["tags"].split(
     '_') if row["tags"] else [] for index, row in tags_df.iterrows()}
 print("Tags dictionary created.")
 
+
+
 if os.path.exists(f"{graph_path}/{graph_name}.pkl"):
     print("Loading graph from existing pkl...")
     with open(f"{graph_path}/{graph_name}.pkl", 'rb') as f:
@@ -71,7 +73,7 @@ else:
     print("Graph structure created.")
 
     # 保存图结构
-    with open(graph_path, 'wb') as f:
+    with open(f"{graph_path}/{graph_name}.pkl", 'wb') as f:
         pickle.dump(G, f)
     print("Graph structure saved.")
 

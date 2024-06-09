@@ -21,7 +21,8 @@ class SLPA:
 
     def execute(self):
         # 节点存储器初始化
-        node_memory = [{tag: 1 for tag in self._initial_labels[node]} if node in self._initial_labels else {} for node in self._G.nodes()]
+        node_memory = [{tag: 1 for tag in self._initial_labels[node]}
+                       if node in self._initial_labels else {} for node in self._G.nodes()]
 
         # 节点索引映射
         node_to_index = {node: index for index,
@@ -39,14 +40,18 @@ class SLPA:
                 # 从speaker中选择一个标签传播到listener
                 for neighbor in self._G.neighbors(listener):
                     neighbor_index = node_to_index[neighbor]
+                    edge_weight = self._G[listener][neighbor].get(
+                        'weight', 1)  # 获取边的权重，默认值为1
                     sum_label = sum(node_memory[neighbor_index].values())
-                    if sum_label>0:
+
+                    if sum_label > 0:
                         label_probs = [
                             float(c) / sum_label for c in node_memory[neighbor_index].values()]
                         selected_label = list(node_memory[neighbor_index].keys())[
                             np.random.multinomial(1, label_probs).argmax()]
+                        # 来自转发且关注的标签应该更容易传播
                         label_list[selected_label] = label_list.get(
-                            selected_label, 0) + 1
+                            selected_label, 0) + 1 * edge_weight
 
                 # listener选择一个最流行的标签添加到内存中
                 if label_list:
