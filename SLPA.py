@@ -40,13 +40,15 @@ class SLPA:
                 for neighbor in self._G.neighbors(listener):
                     neighbor_index = node_to_index[neighbor]
                     sum_label = sum(node_memory[neighbor_index].values())
+                    edge_weight = self._G[listener][neighbor].get(
+                        'weight', 1)
                     if sum_label>0:
                         label_probs = [
                             float(c) / sum_label for c in node_memory[neighbor_index].values()]
                         selected_label = list(node_memory[neighbor_index].keys())[
                             np.random.multinomial(1, label_probs).argmax()]
                         label_list[selected_label] = label_list.get(
-                            selected_label, 0) + 1
+                            selected_label, 0) + 1 * edge_weight
 
                 # listener选择一个最流行的标签添加到内存中
                 if label_list:
