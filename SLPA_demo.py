@@ -71,7 +71,7 @@ else:
     print("Graph structure created.")
 
     # 保存图结构
-    with open(graph_path, 'wb') as f:
+    with open(f"{graph_path}/{graph_name}.pkl", 'wb') as f:
         pickle.dump(G, f)
     print("Graph structure saved.")
 
