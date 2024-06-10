@@ -52,7 +52,6 @@ class SLPA:
                         # 来自转发且关注的标签应该更容易传播
                         label_list[selected_label] = label_list.get(
                             selected_label, 0) + 1 * edge_weight
-
                 # listener选择一个最流行的标签添加到内存中
                 if label_list:
                     max_v = max(label_list.values())
