@@ -44,16 +44,14 @@ class SLPA:
                         'weight', 1)  # 获取边的权重，默认值为1
                     sum_label = sum(node_memory[neighbor_index].values())
 
-                    # 从该neighbor中选择一个标签传播到listener
                     if sum_label > 0:
-                        values = list(node_memory[neighbor_index].values())
-                        exp_values = np.exp(values) # 指数化，使差距更大
-                        label_probs_exp = exp_values / exp_values.sum()  # 归一化
+                        label_probs = [
+                            float(c) / sum_label for c in node_memory[neighbor_index].values()]
                         selected_label = list(node_memory[neighbor_index].keys())[
-                            np.random.multinomial(1, label_probs_exp).argmax()]
+                            np.random.multinomial(1, label_probs).argmax()]
                         # 来自转发且关注的标签应该更容易传播
                         label_list[selected_label] = label_list.get(
-                            selected_label, 0) + 1 * edge_weight
+                            selected_label, 0) + 1
                 # listener选择一个最流行的标签添加到内存中
                 if label_list:
                     max_v = max(label_list.values())

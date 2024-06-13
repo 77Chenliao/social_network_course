@@ -2,7 +2,7 @@ import pandas as pd
 import networkx as nx
 import pickle
 import os
-from SLPA import SLPA
+from SLPA_base import SLPA
 import config
 from utils import split_tags, compare_labels
 from sklearn.metrics import precision_recall_fscore_support
