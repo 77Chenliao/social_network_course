@@ -2,7 +2,8 @@ import pandas as pd
 import networkx as nx
 import pickle
 import os
-from SLPA_base import SLPA
+from SLPA import SLPA as SLPA_altered
+from SLPA_base import SLPA as SLPA_base
 import config
 from utils import split_tags, compare_labels
 from sklearn.metrics import precision_recall_fscore_support
@@ -12,14 +13,15 @@ weibo_data_path = config.data_path
 neo4j_data_path = config.neo4j_path
 result_path = config.result_path
 
-experiment_setting = 'demo' # demo or full, 全量跑可能会很慢
+experiment_setting = 'altered_demo' # base or altered;demo or full, 部分数据 or 全量数据
 
-if experiment_setting == 'demo':
+if experiment_setting.split('_')[1]== 'demo':
     users_df = pd.read_csv(
         f"{weibo_data_path}/users_demo.csv")
 else:
     users_df = pd.read_csv(
         f"{weibo_data_path}/users_full.csv")
+
 
 # duplicate_user_ids = users_df[users_df.duplicated(subset="USER_ID", keep=False)]  # 某些节点既是1层，又是2层
 # if not duplicate_user_ids.empty:
@@ -41,13 +43,14 @@ propagation_tags, validation_tags = split_tags(tags_dict,val_ratio=0.5)
 # 保存validation_tags到CSV文件
 validation_tags_df = pd.DataFrame(
     [{'user_id': user, 'tags': tags} for user, tags in validation_tags.items()])
-# 排序
-validation_tags_df = validation_tags_df.sort_values(by='user_id')
-validation_tags_df.to_csv(f"{result_path}/SLPA/validation_labels.csv", index=False)
 
-if os.path.exists(f"{graph_path}/{experiment_setting}.pkl"):
+validation_tags_df = validation_tags_df.sort_values(by='user_id')
+os.makedirs(f"{result_path}/SLPA_{experiment_setting}", exist_ok=True)
+validation_tags_df.to_csv(f"{result_path}/SLPA_{experiment_setting}/validation_labels.csv", index=False)
+
+if os.path.exists(f"{graph_path}/{experiment_setting.split('_')[1]}.pkl"):
     print("Loading graph from existing pkl...")
-    with open(f"{graph_path}/{experiment_setting}.pkl", 'rb') as f:
+    with open(f"{graph_path}/{experiment_setting.split('_')[1]}.pkl", 'rb') as f:
         G = pickle.load(f)
     print(f"Graph loaded. nodes: {G.number_of_nodes()}, edges: {G.number_of_edges()}")
 else:
@@ -78,14 +81,22 @@ else:
     G.add_weighted_edges_from(forward_edges_with_weights)
     print("Graph structure created.")
     # 保存图结构
-    with open(f"{graph_path}/{experiment_setting}.pkl", 'wb') as f:
+    with open(f"{graph_path}/{experiment_setting.split('_')[1]}.pkl", 'wb') as f:
         pickle.dump(G, f)
     print(f"Graph structure saved. Nodes: {G.number_of_nodes()}, Edges: {G.number_of_edges()}")
+
+
+# 计算pagerank
+
 # 运行SLPA算法
 T = 10  # 迭代次数
 r = 0.3  # 阈值
+if experiment_setting.split('_')[0] == 'base':
+    slpa = SLPA_base(G, T, r, tags_dict)
+else:
+    page_rank = nx.pagerank(G, weight='weight')
+    slpa = SLPA_altered(G, T, r, tags_dict,page_rank)
 
-slpa = SLPA(G, T, r, tags_dict)
 communities = slpa.execute()
 print("Label propagation completed.")
 
@@ -109,7 +120,7 @@ final_labels_df = pd.DataFrame(
     [(node, labels) for node, labels in final_labels.items()], columns=["user_id", "labels"])
 
 # 保存最初的和最后的标签
-result_dir = f"{result_path}/SLPA"
+result_dir = f"{result_path}/SLPA_{experiment_setting}"
 os.makedirs(result_dir, exist_ok=True)
 
 # 将原始的tags_dict保存为initial_labels.csv
