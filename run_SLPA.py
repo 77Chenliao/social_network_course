@@ -71,7 +71,7 @@ else:
     edges_with_weights = [(row["follower"], row["blogger"], 1)
                           for _, row in filtered_edges_df.iterrows()]
     # 为 forward_edges_df 中的边设置指定权重
-    forward_edges_with_weights = [(row["follower"], row["blogger"], row["count"])
+    forward_edges_with_weights = [(row["follower"], row["blogger"], row["count"] + 1) # 关注且转发的权重为转发次数+1
                                   for _, row in filtered_forward_edges_df.iterrows()]
     # 批量添加所有边到图中
     G.add_weighted_edges_from(edges_with_weights)
