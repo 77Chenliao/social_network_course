@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Graph Visualization</title>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            margin: 0;
+        }
+        #label-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #f8f8f8;
+        }
+        .label-button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            flex: 0 1 calc(10% - 10px); /* 每行10个按钮，减去间距 */
+            text-align: center;
+        }
+        .label-button:hover {
+            background-color: gray;
+        }
+        #graph-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+    </style>
+</head>
+<body>
+<div id="label-buttons"></div>
+<div id="graph-container">
+    <svg width="100%" height="100%"></svg>
+</div>
+<script>
+    const width = 960, height = 600;
+
+    const svg = d3.select("svg")
+        .attr("width", "100%")
+        .attr("height", "100%")
+        .call(d3.zoom().on("zoom", (event) => {
+            container.attr("transform", event.transform);
+        }));
+
+    const container = svg.append("g");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    d3.json("graph_data.json").then(function(graph) {
+        const topLabels = graph.top_labels;
+
+        // Create label buttons
+        const labelButtons = d3.select("#label-buttons");
+        topLabels.forEach(label => {
+            labelButtons.append("button")
+                .attr("class", "label-button")
+                .style("background-color", color(label))
+                .text(label)
+                .on("click", () => highlightLabel(label));
+        });
+
+        const simulation = d3.forceSimulation(graph.nodes)
+            .force("link", d3.forceLink(graph.edges).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-30))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force("collision", d3.forceCollide().radius(30));
+
+        const link = container.append("g")
+            .attr("class", "links")
+            .selectAll("line")
+            .data(graph.edges)
+            .enter().append("line")
+            .attr("class", "link");
+
+        const node = container.append("g")
+            .attr("class", "nodes")
+            .selectAll("circle")
+            .data(graph.nodes)
+            .enter().append("circle")
+            .attr("class", "node")
+            .attr("r", 10)
+            .attr("fill", d => color(d.labels[0] || "unknown"));
+
+        node.append("title")
+            .text(d => d.id);
+
+        simulation.on("tick", () => {
+            link.attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node.attr("cx", d => d.x)
+                .attr("cy", d => d.y);
+        });
+
+        function highlightLabel(label) {
+            node.attr("fill", d => d.labels.includes(label) ? color(label) : "#ccc");
+        }
+    });
+</script>
+</body>
+</html>

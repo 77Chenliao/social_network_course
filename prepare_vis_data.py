@@ -12,7 +12,7 @@ with open(r"D:\social_network\data\graph_data\demo.pkl", 'rb') as f:
     G = pickle.load(f)
 
 # 加载labels数据
-labels_path = r'D:\social_network\data\labels.csv'
+labels_path = r'D:\social_network\data\result_data\SLPA_altered_demo\final_labels.csv'
 labels_df = pd.read_csv(labels_path)
 
 # 将labels数据转换为字典
